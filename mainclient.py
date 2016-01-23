@@ -100,6 +100,36 @@ class Game(object):
 
         return True
 
+    def play_controllertick(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    print('That is a pass!')
+                    self.next_player = 1 - self.next_player
+                    if self.last_move_was_a_pass:
+                        return False
+                    else:
+                        self.last_move_was_a_pass = True
+                if event.key == pygame.K_q:
+                    return False
+            if event.type == pygame.MOUSEBUTTONUP:
+                x, y = pygame.mouse.get_pos()
+                try:
+                    idx, idy = self._calc_position(x, y)
+                    stone = self.players[self.next_player].pick_up_stone()
+                    self.board.add_stone(
+                        stone,
+                        Coords(idx, idy)
+                    )
+                    self.next_player = 1 - self.next_player
+                    self.last_move_was_a_pass = False
+                except InvalidMoveError:
+                    print('invalid move!')
+
+        return True
+
     def play(self):
         print('TIME TO PLAY')
         if self.board.boardsize == 19:
@@ -111,37 +141,13 @@ class Game(object):
 
         screen = pygame.display.set_mode(size)
         pygame.display.set_caption('BadukClient')
-        next_player = 0
+        self.next_player = 0
 
         clock = pygame.time.Clock()
-        last_move_was_a_pass = False
+        self.last_move_was_a_pass = False
         while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_p:
-                        print('That is a pass!')
-                        next_player = 1 - next_player
-                        if last_move_was_a_pass:
-                            return
-                        else:
-                            last_move_was_a_pass = True
-                    if event.key == pygame.K_q:
-                        return
-                if event.type == pygame.MOUSEBUTTONUP:
-                    x, y = pygame.mouse.get_pos()
-                    try:
-                        idx, idy = self._calc_position(x, y)
-                        stone = self.players[next_player].pick_up_stone()
-                        self.board.add_stone(
-                            stone,
-                            Coords(idx, idy)
-                        )
-                        next_player = 0 if next_player else 1
-                        last_move_was_a_pass = False
-                    except InvalidMoveError:
-                        print('invalid move!')
+            if not self.play_controllertick():
+                return
 
             plot_board(screen=screen, board=self.board)
             clock.tick(60)
