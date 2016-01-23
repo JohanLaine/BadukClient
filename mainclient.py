@@ -9,14 +9,16 @@ from matplotlib import pyplot as plt
 from rendering import plot_board, OnClick
 from game import (
     Board,
-    WhiteStone,
-    BlackStone,
-    PlayerStone,
     Coords,
     InvalidMoveError,
     NotEncapsulatedException,
+)
+from stones import (
+    WhiteStone,
+    BlackStone,
+    PlayerStone,
     WHITE,
-    BLACK,
+    BLACK
 )
 
 

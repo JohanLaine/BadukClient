@@ -5,9 +5,13 @@ import numpy as np
 from copy import copy
 from itertools import product
 
-WHITE = (255, 255, 255)  # DUPLICATION
-GREY = (100, 100, 100)
-BLACK = (0, 0, 0)
+from stones import (
+    NoStone,
+    PlayerStone,
+    WHITE,
+    BLACK,
+)
+
 
 class InvalidMoveError(Exception):
     pass
@@ -45,34 +49,6 @@ NWES = [
     Coords(0, 1),
     Coords(1, 0),
 ]
-
-
-class Stone(object):
-    def __repr__(self):
-        return self.short
-    def __str__(self):
-        return self.short
-    def __content__(self):
-        return self.short
-    def __eq__(self, other):
-        return self.color == other.color
-
-class NoStone(Stone):
-    short = '0'
-    color = GREY
-
-class PlayerStone(Stone):
-    pass
-
-class WhiteStone(PlayerStone):
-    short = 'W'
-    color = WHITE
-    enemy_color = BLACK
-
-class BlackStone(PlayerStone):
-    short = 'B'
-    color = BLACK
-    enemy_color = WHITE
 
 def alphanumerical_coordinate(coordinate):
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -123,10 +99,11 @@ class Board(object):
                 neighbour = xy + direction
                 if (-1 < neighbour.x < self.boardsize) and \
                     (-1 < neighbour.y < self.boardsize):
-                    self.maybe_remove(
-                        stone,
-                        neighbour
-                    )
+                    if isinstance(self.board[neighbour.x, neighbour.y], PlayerStone):
+                        self.maybe_remove(
+                            stone,
+                            neighbour
+                        )
 
             group, libertypoints = self.liberties(xy, future_color=stone.color)
             if not self.check_history(stone, xy):
@@ -191,7 +168,6 @@ class Board(object):
                 elif (not -1 < new_ij.x < self.boardsize) or \
                     (not -1 < new_ij.y < self.boardsize):
                     pass
-                    #print('outside of range!')
                 else:
                     if isinstance(self.board[new_ij.x, new_ij.y], PlayerStone):
                         surrounding.append(new_ij)

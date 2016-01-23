@@ -5,12 +5,12 @@ import numpy as np
 from matplotlib import pyplot as plt
 from time import time
 
-from game import Board, BlackStone, WhiteStone, Coords
+from game import Board, Coords
+from stones import (
+    PlayerStone,
+)
 import pygame
 
-WHITE = (255, 255, 255)  # TRIPLICATION
-GREY = (100, 100, 100)
-BLACK = (0, 0, 0)
 
 def OnClick(event, board, stone):
     i = int(event.xdata)
@@ -36,11 +36,11 @@ def plot_board(screen, board):
     background_image = pygame.image.load(background_path).convert()
     screen.blit(background_image, [0, 0])
 
-    for (x, y), thing in np.ndenumerate(board.board):
-        if thing.color != GREY:
+    for (x, y), stone in np.ndenumerate(board.board):
+        if isinstance(stone, PlayerStone):
             pygame.draw.circle(
                 screen,
-                thing.color,
+                stone.color,
                 [
                     int(border_width + x*jump),
                     int(border_width + y*jump),
