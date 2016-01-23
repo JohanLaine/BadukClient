@@ -31,6 +31,10 @@ class Player(object):
         stone = BlackStone() if self.color==BLACK else WhiteStone()
         return stone
 
+
+
+
+
 class Game(object):
     def __init__(
         self,
@@ -62,33 +66,39 @@ class Game(object):
         clock = pygame.time.Clock()
 
         while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:
-                        try:
-                            scores = self.board.calculate_scores()
-                            print(scores)
-                            return
-                        except NotEncapsulatedException:
-                            print('Not encapsulated!')
-                if event.type == pygame.MOUSEBUTTONUP:
-                    x, y = pygame.mouse.get_pos()
-                    try:
-                        idx, idy = self._calc_position(x, y)
-                        stone = self.board.board[idx, idy]
-                        if isinstance(stone, PlayerStone):
-                            group, libertypoints = self.board.liberties(
-                                Coords(idx, idy),
-                            )
-                            self.board.remove(stone.enemy_color, group)
-                        print(self.board.pockets)
-                    except InvalidMoveError:
-                        print('invalid move!')
+            if not self.settle_score_controllertick():
+                return
 
             plot_board(screen=screen, board=self.board)
             clock.tick(60)
+
+    def settle_score_controllertick(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    try:
+                        scores = self.board.calculate_scores()
+                        print(scores)
+                        return False
+                    except NotEncapsulatedException:
+                        print('Not encapsulated!')
+            if event.type == pygame.MOUSEBUTTONUP:
+                x, y = pygame.mouse.get_pos()
+                try:
+                    idx, idy = self._calc_position(x, y)
+                    stone = self.board.board[idx, idy]
+                    if isinstance(stone, PlayerStone):
+                        group, libertypoints = self.board.liberties(
+                            Coords(idx, idy),
+                        )
+                        self.board.remove(stone.enemy_color, group)
+                    print(self.board.pockets)
+                except InvalidMoveError:
+                    print('invalid move!')
+
+        return True
 
     def play(self):
         print('TIME TO PLAY')
