@@ -11,15 +11,13 @@ from game import (
     Board,
     WhiteStone,
     BlackStone,
+    PlayerStone,
     Coords,
     InvalidMoveError,
     NotEncapsulatedException,
+    WHITE,
+    BLACK,
 )
-
-
-WHITE = (255, 255, 255)
-GREY = (100, 100, 100)
-BLACK = (0, 0, 0)
 
 
 class Player(object):
@@ -79,7 +77,7 @@ class Game(object):
                     try:
                         idx, idy = self._calc_position(x, y)
                         stone = self.board.board[idx, idy]
-                        if stone.color != GREY:
+                        if isinstance(stone, PlayerStone):
                             group, libertypoints = self.board.liberties(
                                 Coords(idx, idy),
                             )

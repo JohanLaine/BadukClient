@@ -61,12 +61,15 @@ class NoStone(Stone):
     short = '0'
     color = GREY
 
-class WhiteStone(Stone):
+class PlayerStone(Stone):
+    pass
+
+class WhiteStone(PlayerStone):
     short = 'W'
     color = WHITE
     enemy_color = BLACK
 
-class BlackStone(Stone):
+class BlackStone(PlayerStone):
     short = 'B'
     color = BLACK
     enemy_color = WHITE
@@ -112,7 +115,7 @@ class Board(object):
 
     def add_stone(self, stone, xy):
         saved_board = copy(self.board)  # if something illegal occurs
-        if self.board[xy.x, xy.y].color != GREY:
+        if isinstance(self.board[xy.x, xy.y], PlayerStone):
             print('Square occupied!')
             raise InvalidMoveError
         else:
@@ -178,7 +181,7 @@ class Board(object):
         points : int
         surrounding_color : Player
         """
-        if not self.board[xy.x, xy.y].color == GREY:
+        if not isinstance(self.board[xy.x, xy.y], NoStone):
             raise NotAnEyeError
         def check_space(ij):
             for direction in NWES:
@@ -190,10 +193,10 @@ class Board(object):
                     pass
                     #print('outside of range!')
                 else:
-                    if self.board[new_ij.x, new_ij.y].color in [BLACK, WHITE]:
+                    if isinstance(self.board[new_ij.x, new_ij.y], PlayerStone):
                         surrounding.append(new_ij)
                         surrounding_colors.add(self.board[new_ij.x, new_ij.y].color)  # FIXME
-                    elif self.board[new_ij.x, new_ij.y].color == GREY:
+                    elif isinstance(self.board[new_ij.x, new_ij.y], NoStone):
                         eye.append(new_ij)
                         check_space(new_ij)
                     else:
@@ -213,7 +216,7 @@ class Board(object):
 
         return eye, surrounding_color
 
-    def liberties(self, xy, future_color=None, neutral_colors=[GREY]):
+    def liberties(self, xy, future_color=None):
         def check_liberties(ij):
             for direction in NWES:
                 new_ij = ij + direction
@@ -223,7 +226,7 @@ class Board(object):
                     (not -1 < new_ij.y < self.boardsize):
                     pass
                 else:
-                    if self.board[new_ij.x, new_ij.y].color in neutral_colors:
+                    if isinstance(self.board[new_ij.x, new_ij.y], NoStone):
                         libertypoints.append(new_ij)
                     elif self.board[new_ij.x, new_ij.y].color == color:
                         group.append(new_ij)
