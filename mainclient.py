@@ -61,17 +61,16 @@ class Game(object):
         pygame.display.set_caption('BadukClient')
         clock = pygame.time.Clock()
 
-        loopnotover = True
-        while loopnotover:
+        while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    loopnotover = False
+                    return
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         try:
                             scores = self.board.calculate_scores()
                             print(scores)
-                            loopnotover = False
+                            return
                         except NotEncapsulatedException:
                             print('Not encapsulated!')
                 if event.type == pygame.MOUSEBUTTONUP:
@@ -105,22 +104,21 @@ class Game(object):
         next_player = 0
 
         clock = pygame.time.Clock()
-        gamenotover = True
         last_move_was_a_pass = False
-        while gamenotover:
+        while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    gamenotover = False
+                    return
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_p:
                         print('That is a pass!')
                         next_player = 1 - next_player
                         if last_move_was_a_pass:
-                            gamenotover = False
+                            return
                         else:
                             last_move_was_a_pass = True
                     if event.key == pygame.K_q:
-                        gamenotover = False
+                        return
                 if event.type == pygame.MOUSEBUTTONUP:
                     x, y = pygame.mouse.get_pos()
                     try:
