@@ -82,7 +82,6 @@ class Board(object):
         return scores
 
     def add_stone(self, current_player, xy):
-        print('add_stone', current_player, xy)
         saved_board = copy(self.board)  # if something illegal occurs
         if self.board[xy.x, xy.y] != -1:
             print('Square occupied!')

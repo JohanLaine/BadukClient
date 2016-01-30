@@ -111,7 +111,6 @@ class TTTServer(Server):
             return "Not your turn"
         
         try:
-            print('server make_move', x, y)
             self.board.add_stone(
                 player,
                 Coords(x, y)
@@ -119,7 +118,6 @@ class TTTServer(Server):
         except InvalidMoveError:
             return "Invalid move"
         
-        print('LKJASD', self.board)
         self.send_to_all({"action":"gamestate", "state": self.board.board.tolist()})
         
         # if .... Return "Win"

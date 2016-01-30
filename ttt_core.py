@@ -31,7 +31,6 @@ class EngineV4 (ConnectionListener):
         pass
     
     def Network_gamestate(self, data):
-        print('Network_gamestate', data)
         self.current_screen.change_state(data['state'])
     
     def Network_connected(self, data):
