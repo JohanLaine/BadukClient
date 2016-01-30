@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from time import time
 
-from game import Board, Coords
+from board import Board, Coords
 from stones import (
     PlayerStone,
 )
@@ -21,7 +21,7 @@ def OnClick(event, board, stone):
     plt.close(plt.gcf())
 
 
-def plot_board(screen, board):
+def plot_board(surface, board):
     if board.boardsize == 19:
         background_path = 'background.jpg'
         border_width = 45
@@ -34,12 +34,12 @@ def plot_board(screen, board):
         stone_size = 10
         
     background_image = pygame.image.load(background_path).convert()
-    screen.blit(background_image, [0, 0])
+    surface.blit(background_image, [0, 0])
 
     for (x, y), stone in np.ndenumerate(board.board):
         if isinstance(stone, PlayerStone):
             pygame.draw.circle(
-                screen,
+                surface,
                 stone.color,
                 [
                     int(border_width + x*jump),

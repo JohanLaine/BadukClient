@@ -1,57 +1,28 @@
-from __future__ import print_function, division
-
-import multiprocessing
 import sys
-
-from board import (
-    Board,
-    Coords,
-    InvalidMoveError,
-    NotEncapsulatedException,
-)
-from game import (
-    BadukEngine,
-    Player,
-    BadukScreen,
-)
-from rendering import plot_board, OnClick
-from stones import (
-    WhiteStone,
-    BlackStone,
-    PlayerStone,
-    WHITE,
-    BLACK
-)
-
 import ttt_server, ttt_screen, ttt_core
+import multiprocessing
 
-class Game(ttt_core.EngineV4, BadukEngine):
-    name = "BadukClient"
+class Game (ttt_core.EngineV4):
+    name = "Tic tac toe"
     
     fps = 30
     
+    screen_size = [600, 600]
     fullscreen = False
     
-    def __init__(
-        self,
-        address,
-        port,
-        boardsize=9,
-        player1=Player('Bertil', BLACK),
-        player2=Player('Whitney', WHITE),
-    ):
+    def __init__(self, address, port):
         ttt_core.EngineV4.__init__(self, address, port)
-        self.players = [player1, player2]
-        self.board = Board(boardsize=boardsize)
-
+    
     def startup(self):
         ttt_core.EngineV4.startup(self)
         
-        self.screens['Game'] = BadukScreen
-        self.screens['Game'].board = self.board  # STUPID. REMOVE!
+        self.screens['Game'] = ttt_screen.Screen
         
         self.set_screen('Game')
+        self.new_game()
     
+    def new_game(self):
+        pass
 
 def run_server():
     parent_conn, child_conn = multiprocessing.Pipe()
@@ -76,7 +47,6 @@ def run_server():
 def run_client(address, port):
     g = Game(address, port)
     g.start()
-
 
 if __name__ == '__main__':
     # If we supply an IP address we connect

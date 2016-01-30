@@ -2,217 +2,248 @@ from __future__ import division, print_function
 
 import numpy as np
 
-from copy import copy
-from itertools import product
+from PodSixNet.Connection import connection, ConnectionListener
 
+from bisect import bisect_left
+from functools import partial
+from matplotlib import pyplot as plt
+import traceback
+import re
+import time
+import sys
+
+import pygame
+from pygame.locals import *  # Bad idea
+
+from rendering import plot_board, OnClick
+from board import (
+    Board,
+    Coords,
+    InvalidMoveError,
+    NotEncapsulatedException,
+)
 from stones import (
-    NoStone,
+    WhiteStone,
+    BlackStone,
     PlayerStone,
     WHITE,
-    BLACK,
+    BLACK
 )
 
 
-class InvalidMoveError(Exception):
-    pass
+class Player(object):
+    def __init__(self, name='rudolph', color=BLACK):
+        self.name = name
+        self.color = color
 
-class NotEncapsulatedException(Exception):
-    pass
+    def pick_up_stone(self):
+        stone = BlackStone() if self.color==BLACK else WhiteStone()
+        return stone
 
-class NotAnEyeError(Exception):
-    pass
-
-class Coords(object):
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-    def __add__(self, other):
-        new_x = self.x + other.x
-        new_y = self.y + other.y
-        return self.__class__(new_x, new_y)
-
-    def __str__(self):
-        return 'Coords({},{})'.format(self.x, self.y)
-    def __repr__(self):
-        return 'Coords({},{})'.format(self.x, self.y)
-    def __content__(self):
-        return 'Coords({},{})'.format(self.x, self.y)
-
-    def __eq__(self, other):
-        value = (self.x == other.x) and (self.y == other.y)
-        return value
-
-NWES = [
-    Coords(-1, 0),
-    Coords(0, -1),
-    Coords(0, 1),
-    Coords(1, 0),
-]
-
-def alphanumerical_coordinate(coordinate):
-    alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    i, j = coordinate.x, coordinate.y
-    alphanumerical = alphabet[j] + str(i+1)
-    return alphanumerical
-
-class Board(object):
-    def __init__(self, boardsize=2):
-        self.boardsize = boardsize
-        self.board = np.zeros(
-            (self.boardsize, self.boardsize), dtype=object
-        )
-        self.board.fill(
-            NoStone()
-        )
-        self.history = []
-        self.explicit_history = []
-        self.pockets = {BLACK: [], WHITE: []}
-
-    def print_history(self):
-        for (stone, coordinate) in self.history:
-            print(stone, alphanumerical_coordinate(coordinate))
-
-    def calculate_scores(self):
-        scores = {
-            BLACK: len(self.pockets[BLACK]),
-            WHITE: len(self.pockets[WHITE]),
-        }
-        counted_coords = []
-        for (x, y) in product(range(self.boardsize), range(self.boardsize)):
-            try:
-                if Coords(x, y) not in counted_coords:
-                    eye, color = self.points_in_eye(Coords(x, y))
-                    counted_coords.extend(eye)
-                    scores[color] += len(eye)
-            except NotAnEyeError:
-                pass
-        return scores
-
-    def add_stone(self, stone, xy):
-        saved_board = copy(self.board)  # if something illegal occurs
-        if isinstance(self.board[xy.x, xy.y], PlayerStone):
-            print('Square occupied!')
-            raise InvalidMoveError
+class BadukEngine(object):
+    @property
+    def screen_size(self):
+        if self.board.boardsize == 19:
+            size = (512, 512)  # Could be calculated from board size
+        # image is 512 x 512
         else:
-            for direction in NWES:
-                neighbour = xy + direction
-                if (-1 < neighbour.x < self.boardsize) and \
-                    (-1 < neighbour.y < self.boardsize):
-                    if isinstance(self.board[neighbour.x, neighbour.y], PlayerStone):
-                        self.maybe_remove(
-                            stone,
-                            neighbour
-                        )
+            size = (211, 211)
+            # image is 211 x 211
+        return size
 
-            group, libertypoints = self.liberties(xy, future_color=stone.color)
-            if not self.check_history(stone, xy):
-                print('Illegal Ko! Returning')
-                self.board = saved_board
-                raise InvalidMoveError
+    def start(
+        self,
+    ):
+        pygame.init()
+        self.display = pygame.display.set_mode(self.screen_size)
+        self.running = True # unnecessary?
+        try:
+            self.startup()
+            while self.running:
+                for event in pygame.event.get():
+                    if event.type == ACTIVEEVENT:       self.current_screen._handle_active(event)
+                    if event.type == KEYDOWN:           self.current_screen._handle_keydown(event)
+                    if event.type == KEYUP:             self.current_screen._handle_keyup(event)
+                    if event.type == MOUSEBUTTONUP:     self.current_screen._handle_mouseup(event)
+                    if event.type == MOUSEBUTTONDOWN:   self.current_screen._handle_mousedown(event)
+                    if event.type == MOUSEMOTION:       self.current_screen._handle_mousemotion(event)
+                    if event.type == QUIT:              self.current_screen.quit(event)
+                
+                # Check to see if a key has been held down
+                self.current_screen._handle_keyhold()
+                
+                connection.Pump()
+                self.Pump()
 
-            elif len(libertypoints) > 0:
-                self.board[xy.x, xy.y] = stone
-                self.history.append((stone, xy))
-                self.explicit_history.append(copy(self.board))
-            else:
-                print('Illegal move!')  # Again, maybe return to
-                                        # self.board = saved_board ??
-                print(group)
-                print(libertypoints)
-                print(stone)
-                print(xy)
-                print(self.board)
-                raise InvalidMoveError
+                self.current_screen.update()
+                self.current_screen.redraw()
+        except Exception as e:
+            print("")
+            traceback.print_exc(file=sys.stdout)
+            connection.Send({'action': 'quit'})
+            
+            if self.current_screen != None:
+                self.current_screen.quit()
+            raise
+        
+#        self.play()
+#        self.settle_score()
+        print('Simulated game!')
 
-    def check_history(self, stone, xy):
-        proxy_board = copy(self.board)
-        proxy_board[xy.x, xy.y] = stone
-        for historic_board in self.explicit_history:
-            if (historic_board == proxy_board).all().all():
-                print('Ko fight yo')
+        pygame.quit()
+
+    def settle_score(self):
+        print('TIME TO SETTLE SCORE')
+        if self.board.boardsize == 19:
+            size = (512, 512)  # Could be calculated from board size
+        # image is 512 x 512
+        else:
+            size = (211, 211)
+            # image is 211 x 211
+        screen = pygame.display.set_mode(size)
+        pygame.display.set_caption('BadukClient')
+        clock = pygame.time.Clock()
+
+        while True:
+            if not self.settle_score_controllertick():
+                return
+
+            plot_board(screen=screen, board=self.board)
+            clock.tick(60)
+
+    def settle_score_controllertick(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
                 return False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    try:
+                        scores = self.board.calculate_scores()
+                        print(scores)
+                        return False
+                    except NotEncapsulatedException:
+                        print('Not encapsulated!')
+            if event.type == pygame.MOUSEBUTTONUP:
+                x, y = pygame.mouse.get_pos()
+                try:
+                    idx, idy = self._calc_position(x, y)
+                    stone = self.board.board[idx, idy]
+                    if isinstance(stone, PlayerStone):
+                        group, libertypoints = self.board.liberties(
+                            Coords(idx, idy),
+                        )
+                        self.board.remove(stone.enemy_color, group)
+                    print(self.board.pockets)
+                except InvalidMoveError:
+                    print('invalid move!')
+
         return True
 
-    def maybe_remove(self, stone, neighbour):
-        pot_stone = self.board[neighbour.x, neighbour.y]
-        if pot_stone.color == stone.enemy_color:
-            group, libertypoints = self.liberties(neighbour)
-            if len(libertypoints) == 1:  # GIVEN THAT WE ARE PUTTING IN A STONE
-                self.remove(
-                    color=stone.color,
-                    group=group
-                )
-
-    def remove(self, color, group):
-        for xy in group:
-            self.pockets[color].append(self.board[xy.x, xy.y])
-            self.board[xy.x, xy.y] = NoStone()
-
-    def points_in_eye(self, xy):
-        """
-        xy: Coords
-
-        Returns
-        -------
-        points : int
-        surrounding_color : Player
-        """
-        if not isinstance(self.board[xy.x, xy.y], NoStone):
-            raise NotAnEyeError
-        def check_space(ij):
-            for direction in NWES:
-                new_ij = ij + direction
-                if new_ij in eye + surrounding:
-                    pass
-                elif (not -1 < new_ij.x < self.boardsize) or \
-                    (not -1 < new_ij.y < self.boardsize):
-                    pass
-                else:
-                    if isinstance(self.board[new_ij.x, new_ij.y], PlayerStone):
-                        surrounding.append(new_ij)
-                        surrounding_colors.add(self.board[new_ij.x, new_ij.y].color)  # FIXME
-                    elif isinstance(self.board[new_ij.x, new_ij.y], NoStone):
-                        eye.append(new_ij)
-                        check_space(new_ij)
+    def play_controllertick(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    print('That is a pass!')
+                    self.next_player = 1 - self.next_player
+                    if self.last_move_was_a_pass:
+                        return False
                     else:
-                        raise Exception('what is going on here?')
+                        self.last_move_was_a_pass = True
+                if event.key == pygame.K_q:
+                    return False
+            if event.type == pygame.MOUSEBUTTONUP:
+                x, y = pygame.mouse.get_pos()
+                try:
+                    idx, idy = self._calc_position(x, y)
+                    stone = self.players[self.next_player].pick_up_stone()
+                    self.board.add_stone(
+                        stone,
+                        Coords(idx, idy)
+                    )
+                    self.next_player = 1 - self.next_player
+                    self.last_move_was_a_pass = False
+                except InvalidMoveError:
+                    print('invalid move!')
 
-        eye = [xy, ]
-        surrounding = []
-        surrounding_colors = set()
-        check_space(xy)
-        if len(surrounding_colors) == 0:
-            print('wtf')
-            raise Exception
-        elif len(surrounding_colors) == 2:
-            raise NotEncapsulatedException
+        return True
+
+    def play(self):
+        print('TIME TO PLAY')
+        if self.board.boardsize == 19:
+            size = (512, 512)  # Could be calculated from board size
+        # image is 512 x 512
         else:
-            surrounding_color = surrounding_colors.pop()
+            size = (211, 211)
+            # image is 211 x 211
 
-        return eye, surrounding_color
+        surface = pygame.display.set_mode(size)
+        pygame.display.set_caption('BadukClient')
+        self.next_player = 0
 
-    def liberties(self, xy, future_color=None):
-        def check_liberties(ij):
-            for direction in NWES:
-                new_ij = ij + direction
-                if new_ij in group + libertypoints:
-                    pass
-                elif (not -1 < new_ij.x < self.boardsize) or \
-                    (not -1 < new_ij.y < self.boardsize):
-                    pass
-                else:
-                    if isinstance(self.board[new_ij.x, new_ij.y], NoStone):
-                        libertypoints.append(new_ij)
-                    elif self.board[new_ij.x, new_ij.y].color == color:
-                        group.append(new_ij)
-                        check_liberties(new_ij)
+        clock = pygame.time.Clock()
+        self.last_move_was_a_pass = False
+        while True:
+            if not self.play_controllertick():
+                return
 
-        color = self.board[xy.x, xy.y].color if future_color is None else future_color
-        group = [xy, ]
-        libertypoints = []
-        check_liberties(xy)
+            plot_board(surface=surface, board=self.board)
+            clock.tick(60)
 
-        return group, libertypoints
-                    
+#    def _calc_position(self, x, y):
+#        if self.board.boardsize == 19:
+#            border_width = 45
+#            jump = 23.5
+#        elif self.board.boardsize == 9:
+#            border_width = 14
+#            jump = 23
+#        borders = [border_width-jump/2+i*jump for i in range(self.board.boardsize + 1)]
+#        id_x = bisect_left(borders, x) - 1
+#        id_y = bisect_left(borders, y) - 1
+#        if (id_x not in range(self.board.boardsize)) or (id_y not in range(self.board.boardsize)):
+#            raise InvalidMoveError
+#        return id_x, id_y
+
+
+from ttt_screen import Screen
+class BadukScreen(Screen):
+    def redraw(self):
+        if time.time() < self._next_redraw:
+            return
+
+        surf = self.engine.display
+        plot_board(surf, self.board)
+        self._next_redraw = time.time() + self._redraw_delay
+
+    def handle_mouseup(self, event, drag=False):
+        x, y = event.pos
+        try:
+            idx, idy = self._calc_position(x, y)
+#            stone = self.players[self.next_player].pick_up_stone()
+#            self.board.add_stone(
+#                stone,
+#                Coords(idx, idy)
+#            )
+#            self.next_player = 1 - self.next_player
+#            self.last_move_was_a_pass = False
+        except InvalidMoveError:
+            print('invalid move!')
+            return
+
+        self.make_move(idx, idy)
+
+    def _calc_position(self, x, y):
+        if self.board.boardsize == 19:
+            border_width = 45
+            jump = 23.5
+        elif self.board.boardsize == 9:
+            border_width = 14
+            jump = 23
+        borders = [border_width-jump/2+i*jump for i in range(self.board.boardsize + 1)]
+        id_x = bisect_left(borders, x) - 1
+        id_y = bisect_left(borders, y) - 1
+        if (id_x not in range(self.board.boardsize)) or (id_y not in range(self.board.boardsize)):
+            raise InvalidMoveError
+        return id_x, id_y
 
