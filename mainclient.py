@@ -14,9 +14,6 @@ from game import (
     NotEncapsulatedException,
 )
 from stones import (
-    WhiteStone,
-    BlackStone,
-    PlayerStone,
     WHITE,
     BLACK
 )
@@ -26,13 +23,6 @@ class Player(object):
     def __init__(self, name='rudolph', color=BLACK):
         self.name = name
         self.color = color
-
-    def pick_up_stone(self):
-        stone = BlackStone() if self.color==BLACK else WhiteStone()
-        return stone
-
-
-
 
 
 class Game(object):
@@ -88,12 +78,12 @@ class Game(object):
                 x, y = pygame.mouse.get_pos()
                 try:
                     idx, idy = self._calc_position(x, y)
-                    stone = self.board.board[idx, idy]
-                    if isinstance(stone, PlayerStone):
+                    stone_owner = self.board.board[idx, idy]
+                    if stone_owner != -1:
                         group, libertypoints = self.board.liberties(
                             Coords(idx, idy),
                         )
-                        self.board.remove(stone.enemy_color, group)
+                        self.board.remove(1-stone_owner, group)
                     print(self.board.pockets)
                 except InvalidMoveError:
                     print('invalid move!')
@@ -107,7 +97,7 @@ class Game(object):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     print('That is a pass!')
-                    self.next_player = 1 - self.next_player
+                    self.current_player = 1 - self.current_player
                     if self.last_move_was_a_pass:
                         return False
                     else:
@@ -118,12 +108,11 @@ class Game(object):
                 x, y = pygame.mouse.get_pos()
                 try:
                     idx, idy = self._calc_position(x, y)
-                    stone = self.players[self.next_player].pick_up_stone()
                     self.board.add_stone(
-                        stone,
+                        self.current_player,  # rename to current_player
                         Coords(idx, idy)
                     )
-                    self.next_player = 1 - self.next_player
+                    self.current_player = 1 - self.current_player
                     self.last_move_was_a_pass = False
                 except InvalidMoveError:
                     print('invalid move!')
@@ -141,7 +130,7 @@ class Game(object):
 
         screen = pygame.display.set_mode(size)
         pygame.display.set_caption('BadukClient')
-        self.next_player = 0
+        self.current_player = 0
 
         clock = pygame.time.Clock()
         self.last_move_was_a_pass = False

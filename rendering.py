@@ -7,7 +7,8 @@ from time import time
 
 from game import Board, Coords
 from stones import (
-    PlayerStone,
+    WHITE,
+    BLACK,
 )
 import pygame
 
@@ -37,10 +38,10 @@ def plot_board(screen, board):
     screen.blit(background_image, [0, 0])
 
     for (x, y), stone in np.ndenumerate(board.board):
-        if isinstance(stone, PlayerStone):
+        if stone != -1:
             pygame.draw.circle(
                 screen,
-                stone.color,
+                BLACK if stone == 0 else WHITE,
                 [
                     int(border_width + x*jump),
                     int(border_width + y*jump),
