@@ -60,12 +60,12 @@ class Board(object):
         self.board = np.ones(
             (self.boardsize, self.boardsize)
         ).astype(int) * -1  # Would maybe be better with [[str]]
-        self.history = []
-        self.explicit_history = []
+        self.move_history = []
+        self.board_history = []
         self.pockets = [[], []]
 
-    def print_history(self):
-        for (stone, coordinate) in self.history:
+    def print_move_history(self):
+        for (stone, coordinate) in self.move_history:
             print(stone, alphanumerical_coordinate(coordinate))
 
     def calculate_scores(self):
@@ -98,15 +98,15 @@ class Board(object):
                         )
 
             group, libertypoints = self.liberties(xy, current_player=current_player)
-            if not self.check_history(current_player, xy):
+            if not self.check_board_history(current_player, xy):
                 print('Illegal Ko! Returning')
                 self.board = saved_board
                 raise InvalidMoveError
 
             elif len(libertypoints) > 0:
                 self.board[xy.x, xy.y] = current_player
-                self.history.append((current_player, xy))
-                self.explicit_history.append(copy(self.board))
+                self.move_history.append((current_player, xy))
+                self.board_history.append(copy(self.board))
             else:
                 print('Illegal move!')  # Again, maybe return to
                                         # self.board = saved_board ??
@@ -117,10 +117,10 @@ class Board(object):
                 print(self.board)
                 raise InvalidMoveError
 
-    def check_history(self, current_player, xy):
+    def check_board_history(self, current_player, xy):
         proxy_board = copy(self.board)
         proxy_board[xy.x, xy.y] = current_player
-        for historic_board in self.explicit_history:
+        for historic_board in self.board_history:
             if (historic_board == proxy_board).all().all():
                 print('Ko fight yo')
                 return False
