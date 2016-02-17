@@ -9,7 +9,7 @@ import pygame
 from pygame import draw
 from pygame.locals import *
 
-import screen_lib
+import ttt_screen_lib
 
 class Screen (object):
     """
@@ -35,11 +35,11 @@ class Screen (object):
         
         # FPS
         self._next_redraw = time.time()
-        self._redraw_delay = screen_lib.set_fps(self, 30)
+        self._redraw_delay = ttt_screen_lib.set_fps(self, 30)
         
         # CPS
         self._next_update = time.time()
-        self._update_delay = screen_lib.set_fps(self, 30)
+        self._update_delay = ttt_screen_lib.set_fps(self, 30)
         
         # Saved variables
         self.mouse_is_down = False
@@ -71,7 +71,7 @@ class Screen (object):
         self.on_transition_args = []
         self.on_transition_kwargs = {}
         
-        self.transition = screen_lib.transitions[mode](self, *trans_args, **trans_kwargs)
+        self.transition = ttt_screen_lib.transitions[mode](self, *trans_args, **trans_kwargs)
     
     def activate(self):
         """Called when activated after a screen change"""
@@ -87,7 +87,7 @@ class Screen (object):
         self._next_update = time.time() + self._update_delay
     
     def get_rotated_image(self, core_image_name, frame, rotation):
-        rounded_facing = screen_lib.get_facing_angle(
+        rounded_facing = ttt_screen_lib.get_facing_angle(
             rotation, self.facings
         )
         
@@ -100,7 +100,7 @@ class Screen (object):
         
         # Cache miss?
         if img_name not in self.image_cache:
-            self.image_cache[img_name] = screen_lib.make_rotated_image(
+            self.image_cache[img_name] = ttt_screen_lib.make_rotated_image(
                 image = self.engine.images[core_image_name].get(frame),
                 angle = rounded_facing,
             )

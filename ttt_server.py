@@ -1,7 +1,7 @@
 import time
 import socket
 
-import screen_lib
+import ttt_screen_lib
 
 from PodSixNet.Channel import Channel
 from PodSixNet.Server import Server
@@ -46,7 +46,7 @@ class TTTServer(Server):
         self.players = []
         
         self._next_update = time.time()
-        self._update_delay = screen_lib.set_fps(self, 30)
+        self._update_delay = ttt_screen_lib.set_fps(self, 30)
         
         self.address, self.port = kwargs['localaddr']
         print('Server started at {} at port {}'.format(self.address, str(self.port)))
