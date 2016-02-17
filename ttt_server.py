@@ -25,6 +25,9 @@ class ClientChannel(Channel):
         x, y = int(data['x']), int(data['y'])
         
         print('Network_move', self._server.make_move(self.player_id, x, y))
+
+    def Network_pass_move(self, data):
+        print('Network_pass_move', self._server.make_pass_move(self.player_id))
     
 
 class TTTServer(Server):
@@ -125,6 +128,18 @@ class TTTServer(Server):
         # Swap turn
         self.turn = 1 - self.turn
         return "Next move"
+
+    def make_pass_move(self, player):
+        if player != self.turn:
+            return "Not your turn"
+        pass_move_result = self.board.pass_move(player)
+        if pass_move_result == 'Scoring':
+            # GO TO SCORING
+            self.send_to_all({"action":"go_to_scoring"})
+            return "No more moves!"
+        else:
+            self.turn = 1 - self.turn
+            return "Next move"
 
 # def reactor_runner():
 def new_server(conn):

@@ -15,6 +15,8 @@ import sys
 import pygame
 from pygame.locals import *  # Bad idea
 
+from ttt_core import EngineV4
+
 from rendering import plot_board, OnClick
 from board import (
     Board,
@@ -34,7 +36,7 @@ class Player(object):
         self.color = color
 
 
-class BadukEngine(object):
+class BadukEngine(EngineV4):
     @property
     def screen_size(self):
         if self.board.boardsize == 19:
@@ -44,6 +46,9 @@ class BadukEngine(object):
             size = (211, 211)
             # image is 211 x 211
         return size
+
+    def Network_go_to_scoring(self, data):
+        self.running = False
 
     def start(
         self,
@@ -79,112 +84,116 @@ class BadukEngine(object):
             if self.current_screen != None:
                 self.current_screen.quit()
             raise
+
+        print('HEJHEJHEJ')
+        print('HEJHEJHEJ')
+        print('HEJHEJHEJ')
         
 #        self.play()
 #        self.settle_score()
 
         pygame.quit()
 
-    def settle_score(self):
-        print('TIME TO SETTLE SCORE')
-        if self.board.boardsize == 19:
-            size = (512, 512)  # Could be calculated from board size
-        # image is 512 x 512
-        else:
-            size = (211, 211)
-            # image is 211 x 211
-        screen = pygame.display.set_mode(size)
-        pygame.display.set_caption('BadukClient')
-        clock = pygame.time.Clock()
+#    def settle_score(self):
+#        print('TIME TO SETTLE SCORE')
+#        if self.board.boardsize == 19:
+#            size = (512, 512)  # Could be calculated from board size
+#        # image is 512 x 512
+#        else:
+#            size = (211, 211)
+#            # image is 211 x 211
+#        screen = pygame.display.set_mode(size)
+#        pygame.display.set_caption('BadukClient')
+#        clock = pygame.time.Clock()
+#
+#        while True:
+#            if not self.settle_score_controllertick():
+#                return
+#
+#            plot_board(screen=screen, board=self.board)
+#            clock.tick(60)
 
-        while True:
-            if not self.settle_score_controllertick():
-                return
+#    def settle_score_controllertick(self):
+#        for event in pygame.event.get():
+#            if event.type == pygame.QUIT:
+#                return False
+#            if event.type == pygame.KEYDOWN:
+#                if event.key == pygame.K_q:
+#                    try:
+#                        scores = self.board.calculate_scores()
+#                        print(scores)
+#                        return False
+#                    except NotEncapsulatedException:
+#                        print('Not encapsulated!')
+#            if event.type == pygame.MOUSEBUTTONUP:
+#                x, y = pygame.mouse.get_pos()
+#                try:
+#                    idx, idy = self._calc_position(x, y)
+#                    stone = self.board.board[idx, idy]
+#                    if isinstance(stone, PlayerStone):
+#                        group, libertypoints = self.board.liberties(
+#                            Coords(idx, idy),
+#                        )
+#                        self.board.remove(stone.enemy_color, group)
+#                    print(self.board.pockets)
+#                except InvalidMoveError:
+#                    print('invalid move!')
+#
+#        return True
 
-            plot_board(screen=screen, board=self.board)
-            clock.tick(60)
+#    def play_controllertick(self):
+#        for event in pygame.event.get():
+#            if event.type == pygame.QUIT:
+#                return False
+#            if event.type == pygame.KEYDOWN:
+#                if event.key == pygame.K_p:
+#                    print('That is a pass!')
+#                    self.next_player = 1 - self.next_player
+#                    if self.last_move_was_a_pass:
+#                        return False
+#                    else:
+#                        self.last_move_was_a_pass = True
+#                if event.key == pygame.K_q:
+#                    return False
+#            if event.type == pygame.MOUSEBUTTONUP:
+#                x, y = pygame.mouse.get_pos()
+#                try:
+#                    idx, idy = self._calc_position(x, y)
+#                    stone = self.players[self.next_player].pick_up_stone()
+#                    self.board.add_stone(
+#                        stone,
+#                        Coords(idx, idy)
+#                    )
+#                    self.next_player = 1 - self.next_player
+#                    self.last_move_was_a_pass = False
+#                except InvalidMoveError:
+#                    print('invalid move!')
+#
+#        return True
 
-    def settle_score_controllertick(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_q:
-                    try:
-                        scores = self.board.calculate_scores()
-                        print(scores)
-                        return False
-                    except NotEncapsulatedException:
-                        print('Not encapsulated!')
-            if event.type == pygame.MOUSEBUTTONUP:
-                x, y = pygame.mouse.get_pos()
-                try:
-                    idx, idy = self._calc_position(x, y)
-                    stone = self.board.board[idx, idy]
-                    if isinstance(stone, PlayerStone):
-                        group, libertypoints = self.board.liberties(
-                            Coords(idx, idy),
-                        )
-                        self.board.remove(stone.enemy_color, group)
-                    print(self.board.pockets)
-                except InvalidMoveError:
-                    print('invalid move!')
-
-        return True
-
-    def play_controllertick(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:
-                    print('That is a pass!')
-                    self.next_player = 1 - self.next_player
-                    if self.last_move_was_a_pass:
-                        return False
-                    else:
-                        self.last_move_was_a_pass = True
-                if event.key == pygame.K_q:
-                    return False
-            if event.type == pygame.MOUSEBUTTONUP:
-                x, y = pygame.mouse.get_pos()
-                try:
-                    idx, idy = self._calc_position(x, y)
-                    stone = self.players[self.next_player].pick_up_stone()
-                    self.board.add_stone(
-                        stone,
-                        Coords(idx, idy)
-                    )
-                    self.next_player = 1 - self.next_player
-                    self.last_move_was_a_pass = False
-                except InvalidMoveError:
-                    print('invalid move!')
-
-        return True
-
-    def play(self):
-        print('TIME TO PLAY')
-        if self.board.boardsize == 19:
-            size = (512, 512)  # Could be calculated from board size
-        # image is 512 x 512
-        else:
-            size = (211, 211)
-            # image is 211 x 211
-
-        surface = pygame.display.set_mode(size)
-        pygame.display.set_caption('BadukClient')
-        self.next_player = 0
-
-        clock = pygame.time.Clock()
-        self.last_move_was_a_pass = False
-        while True:
-            if not self.play_controllertick():
-                return
-
-            # What HAPPENS HERE??
-            1/0
-            plot_board(surface=surface, board=self.board)
-            clock.tick(60)
+#    def play(self):
+#        print('TIME TO PLAY')
+#        if self.board.boardsize == 19:
+#            size = (512, 512)  # Could be calculated from board size
+#        # image is 512 x 512
+#        else:
+#            size = (211, 211)
+#            # image is 211 x 211
+#
+#        surface = pygame.display.set_mode(size)
+#        pygame.display.set_caption('BadukClient')
+#        self.next_player = 0
+#
+#        clock = pygame.time.Clock()
+#        self.last_move_was_a_pass = False
+#        while True:
+#            if not self.play_controllertick():
+#                return
+#
+#            # What HAPPENS HERE??
+#            1/0
+#            plot_board(surface=surface, board=self.board)
+#            clock.tick(60)
 
 #    def _calc_position(self, x, y):
 #        if self.board.boardsize == 19:
@@ -215,19 +224,16 @@ class BadukScreen(Screen):
         x, y = event.pos
         try:
             idx, idy = self._calc_position(x, y)
-#            stone = self.players[self.next_player].pick_up_stone()
-#            self.board.add_stone(
-#                stone,
-#                Coords(idx, idy)
-#            )
-#            self.next_player = 1 - self.next_player
-#            self.last_move_was_a_pass = False
         except InvalidMoveError:
             print('invalid move!')
             return
 
         self.make_move(idx, idy)
 
+    def handle_keydown(self, event):
+        if event.key == pygame.K_p:
+            self.make_pass_move()
+    
     def _calc_position(self, x, y):
         boardsize = len(self.state)
         if boardsize == 19:

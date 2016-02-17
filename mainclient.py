@@ -21,7 +21,7 @@ from stones import (
 
 import ttt_server, ttt_screen, ttt_core
 
-class Game(ttt_core.EngineV4, BadukEngine):
+class Game(BadukEngine):
     name = "BadukClient"
     
     fps = 30

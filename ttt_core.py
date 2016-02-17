@@ -13,7 +13,7 @@ from pygame.locals import *
 
 file_name = re.compile(r".*/(.*?)\.[a-zA-Z]*")
 
-class EngineV4 (ConnectionListener):
+class EngineV4(ConnectionListener):
     fps = 30
     
     facings = 360/4# The number of different angles we'll draw
@@ -73,47 +73,6 @@ class EngineV4 (ConnectionListener):
         self.current_screen = screen
         self.current_screen.activate()
         self.current_screen.redraw()
-    
-    # Contains main execution loop
-#    def start(self):
-#        pygame.init()
-#        self.display = pygame.display.set_mode(self.screen_size)
-#        
-#        self.running = True
-#        
-#        try:
-#            self.startup()
-#            
-#            while self.running:
-#                for event in pygame.event.get():
-#                    if event.type == ACTIVEEVENT:       self.current_screen._handle_active(event)
-#                    if event.type == KEYDOWN:           self.current_screen._handle_keydown(event)
-#                    if event.type == KEYUP:             self.current_screen._handle_keyup(event)
-#                    if event.type == MOUSEBUTTONUP:     self.current_screen._handle_mouseup(event)
-#                    if event.type == MOUSEBUTTONDOWN:   self.current_screen._handle_mousedown(event)
-#                    if event.type == MOUSEMOTION:       self.current_screen._handle_mousemotion(event)
-#                    if event.type == QUIT:              self.current_screen.quit(event)
-#                
-#                # Check to see if a key has been held down
-#                self.current_screen._handle_keyhold()
-#                
-#                connection.Pump()
-#                self.Pump()
-#                
-#                self.current_screen.update()
-#                self.current_screen.redraw()
-#            
-#        except Exception as e:
-#            print("")
-#            traceback.print_exc(file=sys.stdout)
-#            connection.Send({'action': 'quit'})
-#            
-#            if self.current_screen != None:
-#                self.current_screen.quit()
-#            raise
-#        
-#        self.quit()
-#        pygame.quit()
     
     def load_static_images(self, *images):
         pygame.image.load("media/red_shuttle.png")

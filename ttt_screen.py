@@ -106,9 +106,12 @@ class Screen (object):
             )
         
         return self.image_cache[img_name]
-    
+
     def make_move(self, x, y):
         connection.Send({'action': 'move', 'x': x, 'y': y})
+
+    def make_pass_move(self):
+        connection.Send({'action': 'pass_move'})
     
 #    def redraw(self):
 #        """Basic screens do not have scrolling capabilities
@@ -188,9 +191,6 @@ class Screen (object):
         self.test_for_keyboard_commands()
         self.handle_keydown(event)
     
-    def handle_keydown(self, event):
-        pass
-    
     def _handle_keyup(self, event):
         if event.key in self.keys_down:
             del(self.keys_down[event.key])
@@ -229,12 +229,6 @@ class Screen (object):
             self._handle_mousedragup(event)
             self.handle_mouseup(event, drag=True)
 
-#    def handle_mouseup(self, event, drag=False):
-#        x = int(event.pos[0] / 200)
-#        y = int(event.pos[1] / 200)
-#        
-#        self.make_move(x,y)
-    
     def _handle_doubleclick(self, first_click, second_click):
         self.handle_doubleclick(first_click, second_click)
     

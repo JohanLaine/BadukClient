@@ -81,6 +81,12 @@ class Board(object):
                 pass
         return scores
 
+    def pass_move(self, current_player):
+        if self.move_history[-1][1] is 'pass':
+            return 'Scoring'
+        else:
+            self.move_history.append((current_player, 'pass'))
+
     def add_stone(self, current_player, xy):
         saved_board = copy(self.board)  # if something illegal occurs
         if self.board[xy.x, xy.y] != -1:
